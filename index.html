@@ -11,6 +11,7 @@
   button { padding:10px 20px; margin:10px 0; border:none; background:#e74c3c; color:white; font-size:16px; border-radius:5px; cursor:pointer;}
   img, video { max-width:100%; border-radius:10px; margin-top:10px; }
   #result { margin-top:10px; font-weight:bold; color:#27ae60; }
+  #count { margin-top:10px; font-weight:bold; color:#2980b9; }
 </style>
 </head>
 <body>
@@ -28,84 +29,89 @@
   <canvas id="canvas" style="display:none;"></canvas>
   <img id="captured" src="" alt="Hasil Foto" style="display:none;">
 
-  <h3>3. Kirim untuk Identifikasi</h3>
+  <h3>3. Identifikasi Hama</h3>
   <button id="submitBtn">Identifikasi Hama</button>
   <div id="result"></div>
+  <div id="count"></div>
 </div>
 
 <script>
-  const uploadInput = document.getElementById('uploadImage');
-  const preview = document.getElementById('preview');
+const uploadInput = document.getElementById('uploadImage');
+const preview = document.getElementById('preview');
 
-  const video = document.getElementById('camera');
-  const canvas = document.getElementById('canvas');
-  const snap = document.getElementById('snap');
-  const captured = document.getElementById('captured');
+const video = document.getElementById('camera');
+const canvas = document.getElementById('canvas');
+const snap = document.getElementById('snap');
+const captured = document.getElementById('captured');
 
-  const submitBtn = document.getElementById('submitBtn');
-  const result = document.getElementById('result');
+const submitBtn = document.getElementById('submitBtn');
+const result = document.getElementById('result');
+const countDiv = document.getElementById('count');
 
-  let selectedFile = null;
+let selectedFile = null;
 
-  // Upload Foto
-  uploadInput.addEventListener('change', (e) => {
-    selectedFile = e.target.files[0];
-    if (selectedFile) {
-      preview.src = URL.createObjectURL(selectedFile);
-      preview.style.display = 'block';
-      captured.style.display = 'none';
+// Object untuk menghitung jumlah hama
+let hamaCount = {};
+
+// Upload Foto
+uploadInput.addEventListener('change', (e) => {
+  selectedFile = e.target.files[0];
+  if (selectedFile) {
+    preview.src = URL.createObjectURL(selectedFile);
+    preview.style.display = 'block';
+    captured.style.display = 'none';
+  }
+});
+
+// Kamera Live
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => { video.srcObject = stream; })
+  .catch(err => { console.error("Gagal akses kamera:", err); });
+
+snap.addEventListener('click', () => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    selectedFile = blob; // simpan untuk submit
+    captured.src = URL.createObjectURL(blob);
+    captured.style.display = 'block';
+    preview.style.display = 'none';
+  }, 'image/png');
+});
+
+// Dummy identifikasi + hitung jumlah
+submitBtn.addEventListener('click', () => {
+  if (!selectedFile) { alert("Pilih foto dulu atau ambil foto dari kamera!"); return; }
+
+  result.textContent = "Sedang memproses...";
+
+  setTimeout(() => {
+    const hamaList = ["Kutu", "Rayap", "Kecoa", "Ulat", "Semut"];
+    const randomIndex = Math.floor(Math.random() * hamaList.length);
+    const confidence = (Math.random() * 0.3 + 0.7).toFixed(2); // 70%-100%
+    const identified = hamaList[randomIndex];
+
+    // Update result
+    result.textContent = `Hama: ${identified} (Confidence: ${(confidence*100).toFixed(1)}%)`;
+
+    // Hitung jumlah
+    if (hamaCount[identified]) {
+      hamaCount[identified] += 1;
+    } else {
+      hamaCount[identified] = 1;
     }
-  });
 
-  // Kamera Live
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => { video.srcObject = stream; })
-    .catch(err => { console.error("Gagal akses kamera:", err); });
-
-  snap.addEventListener('click', () => {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    canvas.toBlob(blob => {
-      selectedFile = blob; // simpan untuk submit
-      captured.src = URL.createObjectURL(blob);
-      captured.style.display = 'block';
-      preview.style.display = 'none';
-    }, 'image/png');
-  });
-
-  // Submit ke server (contoh endpoint: /api/identify)
-  submitBtn.addEventListener('click', () => {
-    if (!selectedFile) {
-      alert("Pilih foto dulu atau ambil foto dari kamera!");
-      return;
+    // Tampilkan count
+    let countText = "Jumlah hama terdeteksi:\n";
+    for (let key in hamaCount) {
+      countText += `${key}: ${hamaCount[key]} kali\n`;
     }
-    const formData = new FormData();
-    formData.append('image', selectedFile);
+    countDiv.textContent = countText;
 
-    result.textContent = "Sedang memproses...";
-
-    submitBtn.addEventListener('click', () => {
-    if (!selectedFile) {
-        alert("Pilih foto dulu atau ambil foto dari kamera!");
-        return;
-    }
-
-    result.textContent = "Sedang memproses...";
-
-    setTimeout(() => {
-        // Dummy hasil identifikasi
-        // Bisa diubah-ubah untuk simulasi hama berbeda
-        const hamaList = ["Kutu", "Rayap", "Kecoa", "Ulat", "Semut"];
-        const randomIndex = Math.floor(Math.random() * hamaList.length);
-        const confidence = (Math.random() * 0.3 + 0.7).toFixed(2); // 70% - 100%
-
-        result.textContent = `Hama: ${hamaList[randomIndex]} (Confidence: ${(confidence*100).toFixed(1)}%)`;
-    }, 1000); // delay 1 detik biar terlihat kayak proses real
-}););
+  }, 1000);
+});
 </script>
 
 </body>
 </html>
-
-
