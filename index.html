@@ -85,19 +85,27 @@
 
     result.textContent = "Sedang memproses...";
 
-    fetch('/api/identify', { method: 'POST', body: formData })
-      .then(res => res.json())
-      .then(data => {
-        // Misal backend balikin {hama:"Kutu", confidence:0.92}
-        result.textContent = `Hama: ${data.hama} (Confidence: ${(data.confidence*100).toFixed(1)}%)`;
-      })
-      .catch(err => {
-        console.error(err);
-        result.textContent = "Gagal memproses gambar.";
-      });
-  });
+    submitBtn.addEventListener('click', () => {
+    if (!selectedFile) {
+        alert("Pilih foto dulu atau ambil foto dari kamera!");
+        return;
+    }
+
+    result.textContent = "Sedang memproses...";
+
+    setTimeout(() => {
+        // Dummy hasil identifikasi
+        // Bisa diubah-ubah untuk simulasi hama berbeda
+        const hamaList = ["Kutu", "Rayap", "Kecoa", "Ulat", "Semut"];
+        const randomIndex = Math.floor(Math.random() * hamaList.length);
+        const confidence = (Math.random() * 0.3 + 0.7).toFixed(2); // 70% - 100%
+
+        result.textContent = `Hama: ${hamaList[randomIndex]} (Confidence: ${(confidence*100).toFixed(1)}%)`;
+    }, 1000); // delay 1 detik biar terlihat kayak proses real
+}););
 </script>
 
 </body>
 </html>
+
 
